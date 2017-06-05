@@ -1,0 +1,40 @@
+{
+  "name": "olympus-ws",
+  "version": "1.0.0",
+  "description": "Web socket proxy for Olympus home IoTs",
+  "main": "index.js",
+  "engines": {
+    "node": "7.2.1"
+  },
+  "scripts": {
+    "start": "DEBUG=olympus-ws node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daveamit/olympus-ws.git"
+  },
+  "keywords": [
+    "IoTs",
+    "esp8266",
+    "firebase",
+    "websocket"
+  ],
+  "author": "daveamit@live.com",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/daveamit/olympus-ws/issues"
+  },
+  "homepage": "https://github.com/daveamit/olympus-ws#readme",
+  "devDependencies": {
+    "eslint": "^3.19.0",
+    "eslint-config-airbnb-base": "^11.2.0",
+    "eslint-plugin-import": "^2.3.0"
+  },
+  "dependencies": {
+    "debug": "^2.6.8",
+    "express": "^4.15.3",
+    "firebase-admin": "^5.0.0",
+    "ws": "^3.0.0"
+  }
+}
