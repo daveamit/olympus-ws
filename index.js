@@ -52,7 +52,8 @@ const server = express()
 
 const verifyClient = ({ req, secure }, cb) => {
   const [email, uid] = req.url.split('/').filter(part => !!part);
-  if (!secure || !email || !uid) {
+  debug(secure, email, uid);
+  if (!email || !uid) {
     cb(false, 401, `Sorry ${email || '<unknown>'}, can't let you in.`);
     return;
   }
