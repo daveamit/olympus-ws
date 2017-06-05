@@ -52,7 +52,7 @@ const server = express()
 
 const verifyClient = ({ req, secure }, cb) => {
   const [email, uid] = req.url.split('/').filter(part => !!part);
-  debug(secure, email, uid);
+  // this should be (!secure || !email || !uid) ... but secure is always false, not sure why.
   if (!email || !uid) {
     cb(false, 401, `Sorry ${email || '<unknown>'}, can't let you in.`);
     return;
