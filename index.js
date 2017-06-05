@@ -83,6 +83,18 @@ wss.on('connection', (ws, req) => {
   }
   const [email, uid] = req.url.split('/').filter(part => !!part);
   debug('Signed up for updated for: ', email);
-  db.child(uid).on('value', value => ws.send(JSON.stringify(value.val())));
-  ws.on('close', () => debug('Client disconnected'));
+  const ref = db.child(uid).ref;
+  ref.on('value', (value) => {
+    try {
+      ws.send(JSON.stringify(value.val()));
+    } catch (e) {
+      debug('Client seems to be down', e);
+      // just in case ;)
+      ref.off();
+    }
+  });
+  ws.on('close', () => {
+    debug('Client disconnected');
+    ref.off();
+  });
 });
