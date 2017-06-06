@@ -3,8 +3,11 @@ const debug = require('debug')('olympus-ws');
 
 const PORT = process.env.PORT || 3000;
 const admin = require('firebase-admin');
-
+const Device = require('./src/device');
 const SocketServer = require('ws').Server;
+
+// list of connected devices.
+const devices = {};
 
 const {
   type,
@@ -52,7 +55,11 @@ const server = express()
 
 const verifyClient = ({ req, secure }, cb) => {
   const [email, uid] = req.url.split('/').filter(part => !!part);
+
   // this should be (!secure || !email || !uid) ... but secure is always false, not sure why.
+  // UPDATE: (this is why ->) Because its hosted under heroku under SSL.
+  // So from proxy to the this its just http (not secure)
+  // while from client to heroku is https (secure).
   if (!email || !uid) {
     cb(false, 401, `Sorry ${email || '<unknown>'}, can't let you in.`);
     return;
@@ -82,12 +89,25 @@ wss.on('connection', (ws, req) => {
     debug('Client rejected');
     return;
   }
-  const [email, uid] = req.url.split('/').filter(part => !!part);
+  const [email, uid, device] = req.url.split('/').filter(part => !!part);
+  devices[device] = Device(ws);
+
   debug('Signed up for updated for: ', email);
-  const ref = db.child(uid).ref;
+  const ref = db.child(uid).child('nodes').child(device).ref;
+  let lastKnownValue;
   ref.on('value', (value) => {
     try {
-      ws.send(JSON.stringify(value.val()));
+      const newValue = value.val();
+      // Loop through each pin
+      Object.keys(newValue).forEach((pin) => {
+        // if pin value changes
+        if (!lastKnownValue || newValue[pin].state !== lastKnownValue[pin].state) {
+          // emit the command to the device (via wss)
+          devices[device].set({ pin, value: newValue[pin].state === 'ON' ? 1 : 0 });
+        }
+      });
+      // Update last known value.
+      lastKnownValue = value.val();
     } catch (e) {
       debug('Client seems to be down', e);
       // just in case ;)
@@ -97,5 +117,6 @@ wss.on('connection', (ws, req) => {
   ws.on('close', () => {
     debug('Client disconnected');
     ref.off();
+    delete devices[device];
   });
 });
