@@ -46,7 +46,6 @@ admin.initializeApp({
 
 // As an admin, the app has access to read and write all data, regardless of Security Rules
 const db = admin.database().ref();
-
 const server = express()
     .use((req, res) => {
       res.status(400).json('This is not the way to talk to web sockets.');
@@ -54,14 +53,14 @@ const server = express()
     .listen(PORT, () => debug(`Listening on ${PORT}`));
 
 const verifyClient = ({ req, secure }, cb) => {
-  const [email, uid] = req.url.split('/').filter(part => !!part);
+  const [email, uid, device] = req.url.split('/').filter(part => !!part);
 
   // this should be (!secure || !email || !uid) ... but secure is always false, not sure why.
   // UPDATE: (this is why ->) Because its hosted under heroku under SSL.
   // So from proxy to the this its just http (not secure)
   // while from client to heroku is https (secure).
-  if (!email || !uid) {
-    cb(false, 401, `Sorry ${email || '<unknown>'}, can't let you in.`);
+  if (!email || !uid || !device) {
+    cb(false, 401, `Sorry ${email || device || '<unknown>'}, can't let you in.`);
     return;
   }
   // verify email and uid (do they match) -- a more secure method needs to be implemented here.
@@ -69,7 +68,7 @@ const verifyClient = ({ req, secure }, cb) => {
   admin.auth().getUserByEmail(email)
     .then((userRecord) => {
       if (userRecord.uid === uid) {
-        debug('Client connected: ', email);
+        debug(`Client connected: ${email}#${device}`);
         cb(true, req);
       } else {
         debug('Client rejected', req.url);
@@ -84,6 +83,29 @@ const verifyClient = ({ req, secure }, cb) => {
 };
 const wss = new SocketServer({ verifyClient, server });
 
+function heartbeat() {
+  debug(`Pong from ${this.email}#${this.device}`);
+  this.isAlive = true;
+}
+
+wss.on('connection', (ws) => {
+  ws.isAlive = true; //eslint-disable-line
+  ws.on('pong', heartbeat);
+});
+
+// const interval = setInterval(() => {
+setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) {
+      ws.terminate();
+      return;
+    }
+    ws.isAlive = false;  //eslint-disable-line
+    debug(`Pinging ...${ws.email}#${ws.device}`);
+    ws.ping('', false, true);
+  });
+}, 30000);
+
 wss.on('connection', (ws, req) => {
   if (!req) {
     debug('Client rejected');
@@ -91,13 +113,19 @@ wss.on('connection', (ws, req) => {
   }
   const [email, uid, device] = req.url.split('/').filter(part => !!part);
   devices[device] = Device(ws);
-
-  debug('Signed up for updated for: ', email);
+  ws.email = email;  // eslint-disable-line
+  ws.device = device; // eslint-disable-line
+  debug(`Signed up for updated for: ${email}#${device}`);
   const ref = db.child(uid).child('nodes').child(device).ref;
+  ws.statusRef = db.child(uid).child('status').child(device); // eslint-disable-line
+  ws.statusRef.set('online');
   let lastKnownValue;
   ref.on('value', (value) => {
     try {
       const newValue = value.val();
+      if (!newValue) {
+        return;
+      }
       // Loop through each pin
       Object.keys(newValue).forEach((pin) => {
         // if pin value changes
@@ -115,7 +143,8 @@ wss.on('connection', (ws, req) => {
     }
   });
   ws.on('close', () => {
-    debug('Client disconnected');
+    debug(`Client disconnected:- ${email}#${device}`);
+    ws.statusRef.remove();
     ref.off();
     delete devices[device];
   });
