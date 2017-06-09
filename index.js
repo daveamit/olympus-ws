@@ -84,6 +84,29 @@ const verifyClient = ({ req, secure }, cb) => {
 };
 const wss = new SocketServer({ verifyClient, server });
 
+function heartbeat() {
+  console.log('Pong');
+  this.isAlive = true;
+}
+
+wss.on('connection', (ws) => {
+  ws.isAlive = true; //eslint-disable-line
+  ws.on('pong', heartbeat);
+});
+
+// const interval = setInterval(() => {
+setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) {
+      ws.terminate();
+      return;
+    }
+    ws.isAlive = false;  //eslint-disable-line
+    debug('Pinging ...', ws.email);
+    ws.ping('', false, true);
+  });
+}, 30000);
+
 wss.on('connection', (ws, req) => {
   if (!req) {
     debug('Client rejected');
@@ -91,6 +114,7 @@ wss.on('connection', (ws, req) => {
   }
   const [email, uid, device] = req.url.split('/').filter(part => !!part);
   devices[device] = Device(ws);
+  ws.email = email;  // eslint-disable-line
 
   debug('Signed up for updated for: ', email);
   const ref = db.child(uid).child('nodes').child(device).ref;
