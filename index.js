@@ -123,6 +123,9 @@ wss.on('connection', (ws, req) => {
   ref.on('value', (value) => {
     try {
       const newValue = value.val();
+      if (!newValue) {
+        return;
+      }
       // Loop through each pin
       Object.keys(newValue).forEach((pin) => {
         // if pin value changes
