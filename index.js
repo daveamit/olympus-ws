@@ -46,7 +46,6 @@ admin.initializeApp({
 
 // As an admin, the app has access to read and write all data, regardless of Security Rules
 const db = admin.database().ref();
-const status = db.child('status');
 const server = express()
     .use((req, res) => {
       res.status(400).json('This is not the way to talk to web sockets.');
@@ -70,7 +69,6 @@ const verifyClient = ({ req, secure }, cb) => {
     .then((userRecord) => {
       if (userRecord.uid === uid) {
         debug(`Client connected: ${email}#${device}`);
-        status.child(device).set('online');
         cb(true, req);
       } else {
         debug('Client rejected', req.url);
@@ -99,7 +97,6 @@ wss.on('connection', (ws) => {
 setInterval(() => {
   wss.clients.forEach((ws) => {
     if (ws.isAlive === false) {
-      status.child(ws.device).remove();
       ws.terminate();
       return;
     }
@@ -120,6 +117,8 @@ wss.on('connection', (ws, req) => {
   ws.device = device; // eslint-disable-line
   debug(`Signed up for updated for: ${email}#${device}`);
   const ref = db.child(uid).child('nodes').child(device).ref;
+  ws.statusRef = db.child(uid).child('status').child(device); // eslint-disable-line
+  ws.statusRef.set('online');
   let lastKnownValue;
   ref.on('value', (value) => {
     try {
@@ -142,6 +141,7 @@ wss.on('connection', (ws, req) => {
   });
   ws.on('close', () => {
     debug(`Client disconnected:- ${email}#${device}`);
+    ws.statusRef.remove();
     ref.off();
     delete devices[device];
   });
