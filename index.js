@@ -135,7 +135,7 @@ wss.on('connection', (ws, req) => {
           return;
         }
       }
-      devices[device].send(Object.assign({ type: intrrupt['@type'] }, intrrupt));
+      devices[device].send(Object.assign({ type: intrrupt['@type'] }, intrrupt, { int }));
     } else {
       debug('intrrupts: ', intrrupts);
       debug(int);
@@ -155,7 +155,6 @@ wss.on('connection', (ws, req) => {
       if (!newValue) {
         return;
       }
-      debug(newValue);
       intrrupts = newValue['@intrrupts'];
       // Loop through each pin
       Object.keys(newValue).filter(key => !key.startsWith('@')).forEach((pin) => {
