@@ -118,23 +118,38 @@ wss.on('connection', (ws, req) => {
     return;
   }
   const [email, uid, device] = req.url.split('/').filter(part => !!part);
+  let lastKnownValue;
+  let intrrupts;
+
   devices[device] = Device(ws);
-  devices[device].on(debug.bind(`INT from ${email}#${device}: `));
+  devices[device].on((value) => {
+    const v = JSON.parse(value);
+    if (intrrupts && intrrupts[v.pin]) {
+      const intrrupt = intrrupts[v.pin];
+      if (intrrupt['@condition']) {
+        if (!value[intrrupt['@condition']]) {
+          return;
+        }
+      }
+      devices[device].set(Object.assign({ type: intrrupt['@type'] }, intrrupt));
+    }
+  });
   ws.email = email;  // eslint-disable-line
   ws.device = device; // eslint-disable-line
   debug(`Signed up for updated for: ${email}#${device}`);
   const ref = db.child(uid).child('nodes').child(device).ref;
   ws.statusRef = db.child(uid).child('status').child(device); // eslint-disable-line
   ws.statusRef.set('online');
-  let lastKnownValue;
+
   ref.on('value', (value) => {
     try {
       const newValue = value.val();
       if (!newValue) {
         return;
       }
+      intrrupts = newValue['@intrrupts'];
       // Loop through each pin
-      Object.keys(newValue).forEach((pin) => {
+      Object.keys(newValue).filter(key => !key.startsWith('@')).forEach((pin) => {
         // if pin value changes
         if (!lastKnownValue || newValue[pin].state !== lastKnownValue[pin].state) {
           // emit the command to the device (via wss)
