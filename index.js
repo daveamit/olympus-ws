@@ -135,7 +135,11 @@ wss.on('connection', (ws, req) => {
           return;
         }
       }
-      devices[device].send(Object.assign({ type: intrrupt['@type'] }, intrrupt, { int }));
+      if (intrrupt['@runat' === 'server']) {
+        eval(intrrupt.command)({ db: db.child(uid).child('nodes'), device }); // eslint-disable-line
+      } else {
+        devices[device].send(Object.assign({ type: intrrupt['@type'] }, intrrupt, { int }));
+      }
     } else {
       debug('intrrupts: ', intrrupts);
       debug(int);
