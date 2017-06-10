@@ -106,6 +106,12 @@ setInterval(() => {
   });
 }, 30000);
 
+const buildValue = (pin) => {
+  if (pin.inverted) {
+    return pin.state === 'ON' ? 0 : 1;
+  }
+  return pin.state === 'ON' ? 1 : 0;
+};
 wss.on('connection', (ws, req) => {
   if (!req) {
     debug('Client rejected');
@@ -131,7 +137,7 @@ wss.on('connection', (ws, req) => {
         // if pin value changes
         if (!lastKnownValue || newValue[pin].state !== lastKnownValue[pin].state) {
           // emit the command to the device (via wss)
-          devices[device].set({ pin, value: newValue[pin].state === 'ON' ? 1 : 0 });
+          devices[device].set({ pin, value: buildValue(newValue[pin]) });
         }
       });
       // Update last known value.
