@@ -155,6 +155,7 @@ wss.on('connection', (ws, req) => {
       if (!newValue) {
         return;
       }
+      debug(newValue);
       intrrupts = newValue['@intrrupts'];
       // Loop through each pin
       Object.keys(newValue).filter(key => !key.startsWith('@')).forEach((pin) => {
