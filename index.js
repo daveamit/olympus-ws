@@ -123,7 +123,6 @@ wss.on('connection', (ws, req) => {
 
   devices[device] = Device(ws);
   devices[device].on((int) => {
-    debug(int);
     if (intrrupts && intrrupts[int.pin]) {
       const intrrupt = intrrupts[int.pin];
       if (!intrrupt) {
@@ -137,6 +136,10 @@ wss.on('connection', (ws, req) => {
         }
       }
       devices[device].send(Object.assign({ type: intrrupt['@type'] }, intrrupt));
+    } else {
+      debug('intrrupts: ', intrrupts);
+      debug(int);
+      debug('Intrrupt routines not defined. Ignoring');
     }
   });
   ws.email = email;  // eslint-disable-line
