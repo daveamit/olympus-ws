@@ -8,6 +8,7 @@ module.exports = (ws) => {
   const send = obj => ws.send(JSON.stringify(obj));
 
   return {
+    send,
     on: cb => ws.on('message', message => cb(JSON.parse(message))),
     set: payload => send(Object.assign({ command: 'SET' }, payload)),
     read: ({ pin }) => send({ command: 'GET', pin }),

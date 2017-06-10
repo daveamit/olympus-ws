@@ -130,7 +130,7 @@ wss.on('connection', (ws, req) => {
           return;
         }
       }
-      devices[device].set(Object.assign({ type: intrrupt['@type'] }, intrrupt));
+      devices[device].send(Object.assign({ type: intrrupt['@type'] }, intrrupt));
     }
   });
   ws.email = email;  // eslint-disable-line
