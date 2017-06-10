@@ -137,7 +137,7 @@ wss.on('connection', (ws, req) => {
         // if pin value changes
         if (!lastKnownValue || newValue[pin].state !== lastKnownValue[pin].state) {
           // emit the command to the device (via wss)
-          devices[device].set({ type: newValue['@type'], pin, value: buildValue(newValue[pin]) });
+          devices[device].set({ type: newValue[pin]['@type'], pin, value: buildValue(newValue[pin]) });
         }
       });
       // Update last known value.
