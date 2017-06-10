@@ -119,6 +119,7 @@ wss.on('connection', (ws, req) => {
   }
   const [email, uid, device] = req.url.split('/').filter(part => !!part);
   devices[device] = Device(ws);
+  devices[device].on(debug.bind(`INT from ${email}#${device}: `));
   ws.email = email;  // eslint-disable-line
   ws.device = device; // eslint-disable-line
   debug(`Signed up for updated for: ${email}#${device}`);
