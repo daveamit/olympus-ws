@@ -148,6 +148,7 @@ wss.on('connection', (ws, req) => {
       ref.off();
     }
   });
+  ws.on('message', debug);
   ws.on('close', () => {
     debug(`Client disconnected:- ${email}#${device}`);
     ws.statusRef.remove();
