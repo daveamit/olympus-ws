@@ -123,10 +123,16 @@ wss.on('connection', (ws, req) => {
 
   devices[device] = Device(ws);
   devices[device].on((int) => {
+    debug(int);
     if (intrrupts && intrrupts[int.pin]) {
       const intrrupt = intrrupts[int.pin];
+      if (!intrrupt) {
+        debug('Intrrupt ignored');
+        return;
+      }
       if (intrrupt['@condition']) {
         if (!int[intrrupt['@condition']]) {
+          debug('Condition did not match, ignoring');
           return;
         }
       }
@@ -163,7 +169,7 @@ wss.on('connection', (ws, req) => {
       ref.off();
     }
   });
-  ws.on('message', debug);
+  // ws.on('message', debug);
   ws.on('close', () => {
     debug(`Client disconnected:- ${email}#${device}`);
     ws.statusRef.remove();
