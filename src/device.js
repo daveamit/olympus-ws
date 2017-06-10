@@ -5,7 +5,10 @@
 // (The module Will publish soon.)
 
 module.exports = (ws) => {
-  const send = obj => ws.send(JSON.stringify(obj));
+  const send = (obj) => {
+    console.log('Sending ... ', obj);
+    ws.send(JSON.stringify(obj));
+  };
 
   return {
     send,
