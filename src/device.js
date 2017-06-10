@@ -9,7 +9,7 @@ module.exports = (ws) => {
 
   return {
     on: cb => ws.on('message', message => cb(JSON.parse(message))),
-    set: ({ pin, value }) => send({ command: 'SET', pin, value }),
+    set: payload => send(Object.assign({ command: 'SET' }, payload)),
     read: ({ pin }) => send({ command: 'GET', pin }),
   };
 };
