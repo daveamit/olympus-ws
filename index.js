@@ -122,12 +122,11 @@ wss.on('connection', (ws, req) => {
   let intrrupts;
 
   devices[device] = Device(ws);
-  devices[device].on((value) => {
-    const v = JSON.parse(value);
-    if (intrrupts && intrrupts[v.pin]) {
-      const intrrupt = intrrupts[v.pin];
+  devices[device].on((int) => {
+    if (intrrupts && intrrupts[int.pin]) {
+      const intrrupt = intrrupts[int.pin];
       if (intrrupt['@condition']) {
-        if (!value[intrrupt['@condition']]) {
+        if (!int[intrrupt['@condition']]) {
           return;
         }
       }
