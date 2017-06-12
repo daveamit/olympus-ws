@@ -85,6 +85,7 @@ const wss = new SocketServer({ verifyClient, server });
 
 function heartbeat() {
   debug(`Pong from ${this.email}#${this.device}`);
+  this.statusRef.set('online');
   this.isAlive = true;
 }
 
