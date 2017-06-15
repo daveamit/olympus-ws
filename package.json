@@ -1,6 +1,6 @@
 {
   "name": "olympus-ws",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Web socket proxy for Olympus home IoTs",
   "main": "index.js",
   "engines": {
