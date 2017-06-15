@@ -5,6 +5,61 @@ const PORT = process.env.PORT || 3000;
 const admin = require('firebase-admin');
 const Device = require('./src/device');
 const SocketServer = require('ws').Server;
+const SlackBot = require('slackbots');
+const fetch = require('isomorphic-fetch');
+
+const bot = new SlackBot({
+  token: process.env.slack_bot_key,
+  name: 'zeus',
+});
+bot.on('message', ({ user, type, text }) => {
+  if (type === 'message') {
+    bot.getUserById(user).then(({ name: username, profile: { last_name: name, email } }) => {
+      fetch(`https://api.wit.ai/message?v=16/06/2017&q=${encodeURI(text)}`, { headers: { Authorization: `Bearer ${process.env.wit_token}` } })
+      .then(r => r.json())
+      .then((data) => {
+        const { entities: { greetings, intent, prop } } = data;
+        if (greetings) {
+          bot.postMessageToUser(username, `bow wow! What's up ${name}! Just type \`help\` to get started.`, { as_user: true, icon_emoji: ':dog:' });
+        } else if (intent) {
+          const [{ value }] = intent;
+          switch (value) {
+            case 'help':
+              bot.postMessageToUser(username, `
+    Go on sir! I understand basic english, I'll try to understand whatever you say but please don't try anything fancy!
+    for example:
+    \`Turn on this or turn off that ...\`
+    \`what is the status of that ...\`
+    \`is that on? ...\` 
+    \`etc.\` 
+    
+    You get the idea, right?\`
+    `, { as_user: true, icon_emoji: ':dog:' });
+              break;
+            case 'off':
+              if (prop) {
+                bot.postMessageToUser(username, `switiching off ${prop[0].value}`, { as_user: true, icon_emoji: ':dog:' });
+              } else {
+                bot.postMessageToUser(username, 'Switch off what?', { as_user: true, icon_emoji: ':dog:' });
+              }
+              break;
+            case 'on':
+              if (prop) {
+                bot.postMessageToUser(username, `switiching on ${prop[0].value}`, { as_user: true, icon_emoji: ':dog:' });
+              } else {
+                bot.postMessageToUser(username, 'Switch on what?', { as_user: true, icon_emoji: ':dog:' });
+              }
+              break;
+            default:
+              bot.postMessageToUser(username, 'Not sure if I understand what you mean!', { as_user: true, icon_emoji: ':dog:' });
+          }
+        } else {
+          bot.postMessageToUser(username, 'Not sure if I understand what you mean!', { as_user: true, icon_emoji: ':dog:' });
+        }
+      });
+    });
+  }
+});
 
 // list of connected devices.
 const devices = {};
